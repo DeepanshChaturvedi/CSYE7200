@@ -4,6 +4,7 @@
 
 package edu.neu.coe.csye7200.asstll
 
+import scala.#::
 import scala.annotation.tailrec
 
 /**
@@ -406,9 +407,8 @@ object MyLazyList {
    *         <code>x+step</code>, etc.).
    */
   def from(start: Int, step: Int): ListLike[Int] = {
-// TO BE IMPLEMENTED 
-
-???
+// TO BE IMPLEMENTED
+    MyLazyList(start, () => from(start + step, step))
   }
 
 
