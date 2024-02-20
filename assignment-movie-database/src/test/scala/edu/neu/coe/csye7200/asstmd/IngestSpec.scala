@@ -30,17 +30,21 @@ class IngestSpec extends AnyFlatSpec with Matchers {
   it should "work for movie database" in {
     implicit val codec: Codec = Codec("UTF-8")
     // NOTE that you expect to see a number of exceptions thrown. That's OK. We expect that some lines will not parse correctly.
-    Try(Source.fromResource("movie_metadata.csv")) match {
-      case Success(source) =>
+    val msy = Using(Source.fromResource("movie_metadata.csv")){
+      source =>
         val ingester = new Ingest[Movie]()
-        val mys = for (my <- ingester(source)) yield my.recoverWith {
+        val mys = for (my <- ingester(source).toList) yield my.recoverWith {
           case e: ParseException => System.err.println(e); my
         }
-        val mos = for (my <- mys) yield for (m <- my.toOption; if m.production.country == "New Zealand") yield m
-        val ms = mos.flatten
+        for {
+          my <- mys
+          m <- my.toOption if m.production.country == "New Zealand"
+        } yield m
+    }
+    msy match {
+      case Success(ms) =>
         ms.size shouldBe 4
         ms foreach println
-        source.close()
       case Failure(x) =>
         fail(x)
     }
