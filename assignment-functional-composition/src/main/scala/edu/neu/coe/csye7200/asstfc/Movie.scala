@@ -1,9 +1,10 @@
 package edu.neu.coe.csye7200.asstfc
 
+import spray.json._
+
 import scala.collection.mutable
 import scala.io.{Codec, Source}
 import scala.util._
-import spray.json._
 
 /**
   * This is a variation on the previous Movie class (in edu.neu.coe.csye._7200.ingest)
@@ -92,16 +93,24 @@ case class Rating(code: String, age: Option[Int]) {
   })
 }
 
-object Movie extends App {
+object Movie extends App with DefaultJsonProtocol {
 
   trait IngestibleMovie extends Ingestible[Movie] {
     def fromString(w: String): Try[Movie] = Movie.parse(w.split(",").toSeq)
   }
+  import spray.json._
+  type MovieSeq = Seq[Movie]
 
   //Hint: You may refer to the slides discussed in class for how to serialize object to json
   object MoviesProtocol extends DefaultJsonProtocol {
     // 20 points
-    // TO BE IMPLEMENTED 
+    implicit val nameFormat = jsonFormat4(Name.apply)
+    implicit val ratingFormat = jsonFormat2(Rating.apply)
+    implicit val principalFormat = jsonFormat2(Principal.apply)
+    implicit val reviewsFormat = jsonFormat7(Reviews.apply)
+    implicit val productionFormat = jsonFormat4(Production.apply)
+    implicit val formatFormat = jsonFormat4(Format.apply)
+    implicit val movieFormat = jsonFormat11(Movie.apply)
     // END SOLUTION
   }
 
@@ -122,8 +131,16 @@ object Movie extends App {
   //Hint: Serialize the input to Json format and deserialize back to Object, check the result is still equal to original input.
   def testSerializationAndDeserialization(ms: Seq[Movie]): Boolean = {
     // 5 points
-    // TO BE IMPLEMENTED 
-???
+    // Import the implicit JSON formats
+    import MoviesProtocol._
+
+    val json = ms.toJson
+    println(json)
+
+    val deserializedMovies = json.convertTo[Seq[Movie]]
+    println(deserializedMovies)
+
+    ms == deserializedMovies
   }
 
   def getMoviesFromCountry(country: String, movies: Iterator[Try[Movie]]): Try[Seq[Movie]] = {
