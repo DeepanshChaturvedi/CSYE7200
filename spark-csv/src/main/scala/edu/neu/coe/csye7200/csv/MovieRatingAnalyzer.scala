@@ -1,5 +1,5 @@
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, Encoders, SparkSession}
 
 object MovieRatingAnalysis {
 
@@ -19,45 +19,20 @@ object MovieRatingAnalysis {
       .csv(filePath)
 
     //println("Total count = " + df.count()) //Debugging code
-    val resultDF = processMovieRatings(df)
-
-    println(resultDF.count())
-
-    resultDF.show(resultDF.count.toInt, false)
-
+    val (meanRating, stdDevRating) = processMovieRatings(df)
+    println("Mean Rating for all movies: " + meanRating)
+    println("Standard Deviation Rating of all movies: " + stdDevRating)
 
     spark.stop()
   }
 
-  def processMovieRatings(df: DataFrame): DataFrame = {
+  def processMovieRatings(df: DataFrame): (Double, Double) = {
+    val meanDF = df.agg(mean("imdb_score").alias("mean_rating"))
+    val stdDevDF = df.agg(stddev_samp("imdb_score").alias("std_dev_rating"))
 
-    val meanDF = df.groupBy("movie_title")
-      .agg(mean("imdb_score").alias("mean_rating"))
+    val meanRating = meanDF.select("mean_rating").as[Double](Encoders.scalaDouble).first()
+    val stdDevRating = stdDevDF.select("std_dev_rating").as[Double](Encoders.scalaDouble).first()
 
-
-    val stdDevDF = df.groupBy("movie_title")
-      .agg(stddev_samp("imdb_score").alias("std_dev_rating"))
-
-
-
-//    Debugging code
-//    val countDF = df.groupBy("movie_title")
-//      .agg(count("movie_title").alias("count"))
-//
-//    val zeroCountMovies = countDF.filter(col("count") > 1)
-//
-//
-//    if (zeroCountMovies.count() > 0) {
-//      println("Movies with one count:" + zeroCountMovies.count())
-//      zeroCountMovies.show()
-//    } else {
-//      println("No movies with zero count.")
-//    }
-
-
-    val resultDF = meanDF.join(stdDevDF, "movie_title")
-    //val resultWithStdDevNotNull = resultDF.filter(col("std_dev_rating").isNotNull)  //debugging code
-    resultDF
+    (meanRating, stdDevRating)
   }
-
 }

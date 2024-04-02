@@ -22,15 +22,12 @@ class MovieRatingAnalysisSpec extends AnyFlatSpec with Matchers {
     ("Movie3", 8.5)
   )).toDF("movie_title", "imdb_score")
 
-  // Test the processMovieRatings method
-  "processMovieRatings method" should "return DataFrame with expected columns" in {
-    val resultDF = MovieRatingAnalysis.processMovieRatings(testDF)
-    resultDF.columns should contain allOf ("movie_title", "mean_rating", "std_dev_rating")
-  }
+  "processMovieRatings method" should "return tuple with expected values" in {
+    val (meanRating, stdDevRating) = MovieRatingAnalysis.processMovieRatings(testDF)
 
-  it should "return DataFrame with correct number of rows" in {
-    val resultDF = MovieRatingAnalysis.processMovieRatings(testDF)
-    resultDF.count() shouldEqual 3
+
+    meanRating shouldEqual 7.9
+    stdDevRating shouldEqual 0.96176 +- 0.1
   }
 
 }
